@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import styles from "@/app/styles/home.module.css";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 interface CardProps {
@@ -14,7 +12,6 @@ interface CardProps {
 export default function SearchBar({
   placeholder,
   imgURL,
-  searchUrl,
 }: CardProps) {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false)
@@ -28,10 +25,10 @@ export default function SearchBar({
 
   return (
     <div
-      className={`flex items-center gap-2 border-2 border-[#22577A] rounded-xl px-2 py-1 sm:min-w-96 ${styles.inputContainer}`}
+      className={`flex items-center gap-2 border-2 border-[#22577A] rounded-xl px-2 py-1 sm:min-w-96 inputContainer`}
     >
       <input
-        className={`text-black w-full outline-none font-alexandria text-sm sm:text-base ${styles.input}`}
+        className={`text-black w-full outline-none font-alexandria text-sm sm:text-base input`}
         type="text"
         placeholder={placeholder}
         value={search}
@@ -45,7 +42,7 @@ export default function SearchBar({
           loading ? (<div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-[#22577A]" />
           ) : (
             <img
-              className={`w-4 sm:w-5 ${styles.lupaIcon}`}
+              className={`w-4 sm:w-5 lupaIcon`}
               src={imgURL}
               alt="Buscar"
             />

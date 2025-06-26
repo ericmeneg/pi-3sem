@@ -5,7 +5,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
 
-export default function Error({ error, reset }: { error: Error; reset: () => void }) {
+export default function Error({ error }: { error: Error; reset: () => void }) {
   useEffect(() => {
     console.error('Erro ao carregar a receita:', error);
   }, [error]);
