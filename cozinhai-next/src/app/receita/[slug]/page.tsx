@@ -3,10 +3,14 @@ import Image from 'next/image';
 import receitas from './data/receitas';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import styles from '../../styles/home.module.css';
 
-export default function ReceitaPage({ params }: { params: { slug: string } }) {
-  const receita = receitas.find(r => r.slug === params.slug);
+interface ReceitaPageProps {
+  params: Promise<{ slug: string }>;
+}
+
+export default async function ReceitaPage({ params }: ReceitaPageProps) {
+  const { slug } = await params;
+  const receita = receitas.find(r => r.slug === slug);
 
   if (!receita) return notFound();
 
@@ -15,9 +19,11 @@ export default function ReceitaPage({ params }: { params: { slug: string } }) {
       <Header />
 
       <main className="flex flex-col items-center px-6 py-12 gap-8">
-        <img
+        <Image
           src="/images/fullLogo.svg"
           alt="Logo Cozinhaí"
+          width={256}
+          height={96}
           className="w-64 mb-6"
         />
 

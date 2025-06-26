@@ -34,8 +34,8 @@ export default function Header() {
   }
 
   return (
-    <div className="bg-[#EDF2F4] w-full flex items-center justify-center fixed top-0 z-10">
-      <header className="flex flex-row items-center justify-around w-full p-4 gap-2 flex-nowrap">
+    <div className="bg-[#EDF2F4] w-full flex items-center justify-center fixed top-0 z-10 ">
+      <header className="flex flex-row items-center justify-around w-full gap-2 flex-nowrap h-[4.875rem]">
         <Link href="/home">
           <Image src="/images/homeIcon.svg" alt="Home" width={20} height={20} />
         </Link>
@@ -46,14 +46,14 @@ export default function Header() {
           searchUrl={`https://api.spoonacular.com/recipes/complexSearch?query=${"W.I.P."}&apiKey=${"W.I.P."}`}
         />
 
-        {/* Área do usuário */}
+          {/* Área do usuário */}
         <div className="relative" ref={dropdownRef}>
           {isAuthenticated ? (
             // Usuário logado - mostrar dropdown
-            <div>
+            <div className="h-[4.875rem]">
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-2 p-2 rounded-full hover:bg-white/50 transition-colors duration-200"
+                className="flex items-center gap-2 p-5 rounded-full hover:bg-white/50 transition-colors duration-200"
               >
                 <div className="w-8 h-8 bg-gradient-to-r from-[#22577A] to-[#57CC99] rounded-full flex items-center justify-center">
                   <User className="w-4 h-4 text-white" />
@@ -125,9 +125,9 @@ export default function Header() {
             </div>
           ) : (
             // Usuário não logado - link para login
-            <Link href="/login" className="p-2 rounded-full hover:bg-white/50 transition-colors duration-200">
+            <Link href="/login" className="p-2 rounded-full  transition-colors duration-200">
               <Image
-                className="w-6 sm:w-7 md:w-7.5"
+                className="hover:bg-white/50 w-6 sm:w-7 md:w-7.5"
                 src="/images/profileIcon.svg"
                 alt="Fazer login"
                 width={28}

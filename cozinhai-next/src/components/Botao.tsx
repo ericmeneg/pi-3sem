@@ -1,6 +1,5 @@
 import Link from "next/link";
 import React from "react";
-import styles from "../app/styles/home.module.css";
 
 interface botaoProps {
   texto: string;
@@ -15,7 +14,7 @@ export default function Botao({ texto, destino, fontSize }: botaoProps) {
       href={destino}
     >
       <div
-        className={`text-white flex flex-row justify-between gap-2 items-center ${styles.buttonContent}`}
+        className={`text-white flex flex-row justify-between gap-2 items-center buttonContent`}
         style={fontSize ? { fontSize } : undefined}
       >
         <p>{texto}</p>

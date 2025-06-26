@@ -2,19 +2,25 @@
 
 import Header from "@/components/Header";
 import RecomendacaoCard from "@/components/RecomendacaoCard";
-import styles from "../styles/home.module.css";
 import Footer from "@/components/Footer";
 import { useEffect, useState } from "react";
 import IngredientesDaEpoca from "@/components/ingredientes-da-epoca";
-import { apiKey } from "@/app/receitas/page";
 import Image from "next/image";
+import RandomRecommendations from "@/components/RandomRecomendations";
+
+interface Recipe {
+  id: number;
+  title: string;
+  image: string;
+  // add other properties as needed
+}
 
 export default function Home() {
   const [inputValue, setInputValue] = useState("");
   const [ingredients, setIngredients] = useState<string[]>([]);
   const [suggestions, setSuggestions] = useState<{ name: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [recipes, setRecipes] = useState<any[]>([]);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
@@ -24,7 +30,7 @@ export default function Home() {
       }
 
       fetch(
-        `https://api.spoonacular.com/food/ingredients/autocomplete?apiKey=${apiKey}&query=${inputValue}`
+        `https://api.spoonacular.com/food/ingredients/autocomplete?apiKey=${process.env.NEXT_PUBLIC_SPOONACULAR_API_KEY}&query=${inputValue}`
       )
         .then((res) => res.json())
         .then((data) => {
@@ -40,7 +46,7 @@ export default function Home() {
     return () => clearTimeout(delayDebounce);
   }, [inputValue]);
 
-  const handleSuggestionClick = (value: any) => {
+  const handleSuggestionClick = (value: string) => {
     setInputValue(value);
     setSuggestions([]);
   };
@@ -64,7 +70,7 @@ export default function Home() {
     const ingredientsInUrl = ingredients.join(",+");
     try {
       const response = await fetch(
-        `https://api.spoonacular.com/recipes/findByIngredients?apiKey=${apiKey}&ingredients=${ingredientsInUrl}`
+        `https://api.spoonacular.com/recipes/findByIngredients?apiKey=${process.env.NEXT_PUBLIC_SPOONACULAR_API_KEY}&ingredients=${ingredientsInUrl}`
       );
       const data = await response.json();
       // data is an array of recipes, each with a 'title' property
@@ -83,7 +89,7 @@ export default function Home() {
     <div className="bg-[#FFFFFF] min-h-screen w-full">
       <Header />
       <div
-        className={`flex flex-col items-center justify-center gap-20 px-4 py-16 sm:px-6 ${styles.main}`}
+        className={`flex flex-col items-center justify-center gap-20 px-4 py-16 sm:px-6 main`}
       >
         <div className="relative w-[12rem] aspect-[3/1]">
   <Image
@@ -99,20 +105,20 @@ export default function Home() {
             Pesquise seus ingredientes
           </h1>
           <div
-            className={`flex w-full max-w-xs sm:max-w-md items-center border-2 border-[#22577A] rounded-xl px-3 ${styles.inputContainer}`}
+            className={`flex w-full max-w-xs sm:max-w-md items-center border-2 border-[#22577A] rounded-xl px-3 inputContainer`}
           >
             <input
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               type="text"
               placeholder="Busque um ingrediente"
-              className={`flex-grow bg-transparent py-2 text-black font-alexandria text-sm sm:text-base ${styles.input}`}
+              className={`flex-grow bg-transparent py-2 text-black font-alexandria text-sm sm:text-base input`}
             />
 
             <button onClick={handleIngredient}>
               <img
                 src="/images/addIcon.svg"
-                className={`w-4 sm:w-5 ${styles.lupaIcon}`}
+                className={`w-4 sm:w-5 lupaIcon`}
               />
             </button>
           </div>
@@ -168,11 +174,11 @@ export default function Home() {
               key={idx}
               title={item.title}
               image={item.image}
-              slug={item.id}
+              slug={item.id.toString()}
             />
           ))}
 
-        <h1 className="text-[#22577A] font-bold text-xl sm:text-2xl text-center">
+        {/* <h1 className="text-[#22577A] font-bold text-xl sm:text-2xl text-center">
           Recomendações Diárias
         </h1>
         <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
@@ -191,9 +197,9 @@ export default function Home() {
             title="Bolo de Caneca"
             slug="bolo-de-caneca"
           />
-        </div>
+        </div> */}
 
-        {/* <RandomRecommendations number={3} title="Sugestões do Dia" /> */}
+        <RandomRecommendations number={3} title="Sugestões do Dia" />
 
         <IngredientesDaEpoca />
       </div>
