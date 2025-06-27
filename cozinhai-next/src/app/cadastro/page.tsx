@@ -316,7 +316,7 @@ export default function CadastroPage() {
           <p className="text-gray-600" style={{ fontFamily: "Alexandria" }}>
             Já tem uma conta?{" "}
             <Link
-              href="/home/login"
+              href="/login"
               className="font-semibold text-[#22577A] hover:text-[#57CC99] transition-colors duration-200"
             >
               Faça login
