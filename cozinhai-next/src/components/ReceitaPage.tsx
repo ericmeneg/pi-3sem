@@ -7,7 +7,7 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import axios from 'axios'
 import { Star } from 'lucide-react'
-import Link from 'next/link'; // Importe Link do next/link
+import Link from 'next/link';
 
 interface Ingredient {
   id: number
@@ -236,7 +236,6 @@ export default function ReceitaPage({ params }: { params: { id: string } }) {
             </ul>
           )}
 
-          {/* Renderiza o formulário de avaliação APENAS se o usuário estiver autenticado E AINDA NÃO AVALIOU */}
           {isAuthenticated && !hasUserReviewed && (
             <div className="mt-6 space-y-4">
               <h4 className="font-semibold text-[#22577A]">Deixe sua avaliação</h4>

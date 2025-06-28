@@ -1,9 +1,9 @@
 export interface AlimentoSazonal {
   id: string
   nome: string
-  icone: string // Nome do ícone do Iconify
+  icone: string
   categoria: "fruta" | "verdura" | "legume"
-  meses: number[] // Array com os meses (1-12) em que o alimento está na época
+  meses: number[]
   slug: string
 }
 

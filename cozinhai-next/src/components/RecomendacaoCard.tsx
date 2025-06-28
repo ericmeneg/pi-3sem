@@ -1,4 +1,3 @@
-// RecomendacaoCard.tsx
 import Botao from './Botao'
 import Image from 'next/image'
 

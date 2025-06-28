@@ -29,7 +29,6 @@ export default function Header() {
   const handleLogout = () => {
     logout()
     setIsDropdownOpen(false)
-    // Opcional: redirecionar para home após logout
     window.location.href = "/home"
   }
 

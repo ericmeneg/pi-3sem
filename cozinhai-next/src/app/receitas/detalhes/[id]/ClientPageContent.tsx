@@ -1,16 +1,14 @@
-// src/app/receitas/detalhes/[id]/ClientPageContent.tsx
 'use client'
 
 import { useEffect, useState, useMemo } from 'react'
 import { useAuth } from '@/components/auth/auth-context'
 import Image from 'next/image'
-import Footer from '@/components/Footer' // Footer provavelmente também é um client component
+import Footer from '@/components/Footer'
 import axios from 'axios'
 import { Star } from 'lucide-react'
 import Link from 'next/link'
-import Header from '@/components/Header' // Header provavelmente também é um client component
+import Header from '@/components/Header'
 
-// Mantenha suas interfaces aqui, ou importe-as de um arquivo central se já tiver
 interface Ingredient {
   id: number
   amount: number
@@ -67,18 +65,12 @@ const Stars = ({ grade = 0 }: { grade?: number }) => (
   </div>
 )
 
-// Defina as props que este componente de cliente espera
 interface ClientPageContentProps {
-  idReceita: string; // Agora é uma string simples, pois foi resolvida no Server Component
-  // Se quiser passar dados iniciais da receita do servidor, adicione aqui:
-  // initialRecipeData?: RecipeData;
+  idReceita: string;
 }
 
 export default function ClientPageContent({ idReceita }: ClientPageContentProps) {
   const { user, isAuthenticated } = useAuth()
-  // Remova a lógica de desestruturação de params aqui, pois idReceita já vem pronta
-  // const idReceita = params.id; // Esta linha será removida
-
   const [data, setData] = useState<RecipeData | null>(null)
   const [reviews, setReviews] = useState<Review[]>([])
   const [comment, setComment] = useState('')
@@ -192,7 +184,7 @@ export default function ClientPageContent({ idReceita }: ClientPageContentProps)
 
   return (
     <div className="bg-white min-h-screen flex flex-col">
-      <Header /> {/* Header e Footer podem ser Client Components também */}
+      <Header />
       <main className="flex flex-col items-center px-6 py-12 gap-8">
         <Image
           src="/images/fullLogo.svg"

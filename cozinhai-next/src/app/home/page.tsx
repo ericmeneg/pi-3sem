@@ -12,7 +12,6 @@ interface Recipe {
   id: number;
   title: string;
   image: string;
-  // add other properties as needed
 }
 
 export default function Home() {
@@ -73,10 +72,8 @@ export default function Home() {
         `https://api.spoonacular.com/recipes/findByIngredients?apiKey=${process.env.NEXT_PUBLIC_SPOONACULAR_API_KEY}&ingredients=${ingredientsInUrl}`
       );
       const data = await response.json();
-      // data is an array of recipes, each with a 'title' property
       if (Array.isArray(data) && data.length > 0) {
         setRecipes(data);
-        // logs the title of the first recipe
       } else {
         console.log("No recipes found.");
       }
@@ -177,27 +174,6 @@ export default function Home() {
               slug={item.id.toString()}
             />
           ))}
-
-        {/* <h1 className="text-[#22577A] font-bold text-xl sm:text-2xl text-center">
-          Recomendações Diárias
-        </h1>
-        <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
-          <RecomendacaoCard
-            image="images/miniChurros.svg"
-            title="Mini Churros"
-            slug="mini-churros"
-          />
-          <RecomendacaoCard
-            image="images/panquecaDeBanana.svg"
-            title="Panqueca de Banana"
-            slug="panqueca-de-banana"
-          />
-          <RecomendacaoCard
-            image="images/boloDeCaneca.svg"
-            title="Bolo de Caneca"
-            slug="bolo-de-caneca"
-          />
-        </div> */}
 
         <RandomRecommendations number={3} title="Sugestões do Dia" />
 

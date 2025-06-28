@@ -1,10 +1,10 @@
-"use client"; // Mantenha este aqui, pois ainda é um Client Component
+"use client";
 
 import Image from "next/image";
 import Header from "@/components/Header";
 import Botao from "@/components/Botao";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState, Suspense } from "react"; // <-- Importe Suspense aqui!
+import { useEffect, useState, Suspense } from "react";
 
 type Recipe = {
   id: number;
@@ -63,7 +63,6 @@ function RecipeResultsContent() {
     fetchRecipes();
   }, [query]);
 
-  // Conteúdo JSX do componente RecipeResults original
   if (!query) {
     return (
       <div className="min-h-screen flex text-center items-center justify-around max-w-4xl mx-auto">
@@ -127,16 +126,10 @@ function RecipeResultsContent() {
   );
 }
 
-// Este é o componente padrão da página, agora ele envolve o RecipeResultsContent com Suspense
 export default function RecipeResultsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      {/*
-        O componente que usa useSearchParams (RecipeResultsContent)
-        está agora envolvido por Suspense. O fallback é o que será
-        mostrado enquanto o componente interno é carregado no cliente.
-      */}
       <Suspense fallback={<div>Carregando resultados da busca...</div>}>
         <RecipeResultsContent />
       </Suspense>

@@ -1,4 +1,3 @@
-// app/receita/data/receitas.ts
 const receitas = [
   {
     slug: "panqueca-de-banana",
