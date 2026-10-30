@@ -34,11 +34,23 @@ interface Review {
   date?: string
 }
 
+type ReviewSummaryStatus = 'not_ready' | 'pending' | 'available'
+
+interface ReviewSummary {
+  status: ReviewSummaryStatus
+  summary?: string
+  reviewCount: number
+  pendingReviewCount: number
+  generatedAt?: string
+}
+
 interface Favorite {
   recipeId: string
 }
 
 const FAVORITES_PAGE_SIZE = 12
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || 'https://pi-3sem-backend.onrender.com'
 
 const StarsEdit = ({
   grade,
@@ -87,6 +99,10 @@ export default function ClientPageContent({ idReceita }: ClientPageContentProps)
   const [isFavoriteLoading, setIsFavoriteLoading] = useState(false)
   const [isFavoriteSubmitting, setIsFavoriteSubmitting] = useState(false)
   const [favoriteError, setFavoriteError] = useState<string | null>(null)
+  const [reviewSummary, setReviewSummary] = useState<ReviewSummary | null>(null)
+  const [isSummaryLoading, setIsSummaryLoading] = useState(true)
+  const [summaryError, setSummaryError] = useState<string | null>(null)
+  const [summaryRefresh, setSummaryRefresh] = useState(0)
 
   const hasUserReviewed = useMemo(() => {
     if (!isAuthenticated || !user || !reviews.length) {
@@ -135,6 +151,60 @@ export default function ClientPageContent({ idReceita }: ClientPageContentProps)
 
     fetchData()
   }, [idReceita])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const fetchReviewSummary = async () => {
+      setIsSummaryLoading(true)
+      setSummaryError(null)
+
+      try {
+        const response = await axios.get<ReviewSummary>(
+          `${API_URL}/recipe/${idReceita}/review-summary`
+        )
+
+        if (
+          !response.data ||
+          !['not_ready', 'pending', 'available'].includes(response.data.status)
+        ) {
+          throw new Error('A API retornou um status inválido para o resumo.')
+        }
+
+        if (!cancelled) setReviewSummary(response.data)
+      } catch (error) {
+        console.error('Erro ao carregar resumo das avaliações:', error)
+        if (!cancelled) {
+          if (axios.isAxiosError(error) && error.response?.status === 404) {
+            setSummaryError(
+              'O backend configurado ainda não disponibiliza o resumo das avaliações. Atualize a implantação do backend.'
+            )
+            return
+          }
+
+          const apiMessage = axios.isAxiosError<{ message?: string | string[] }>(error)
+            ? error.response?.data?.message
+            : undefined
+          setSummaryError(
+            Array.isArray(apiMessage)
+              ? apiMessage.join(' ')
+              : apiMessage ||
+                  (error instanceof Error
+                    ? error.message
+                    : 'Não foi possível carregar o resumo das avaliações.')
+          )
+        }
+      } finally {
+        if (!cancelled) setIsSummaryLoading(false)
+      }
+    }
+
+    fetchReviewSummary()
+
+    return () => {
+      cancelled = true
+    }
+  }, [idReceita, summaryRefresh])
 
   useEffect(() => {
     if (isAuthLoading) return
@@ -278,6 +348,7 @@ export default function ClientPageContent({ idReceita }: ClientPageContentProps)
 
       setComment('')
       setGrade(3)
+      setSummaryRefresh((previous) => previous + 1)
     } catch (err) {
       console.error('Erro ao enviar avaliação:', err)
     } finally {
@@ -369,7 +440,44 @@ export default function ClientPageContent({ idReceita }: ClientPageContentProps)
             dangerouslySetInnerHTML={{ __html: data.instructions }}
           />
 
-          <h3 className="text-[#22577A] font-bold text-xl mt-6 mb-2">Avaliações:</h3>
+          <section className="mt-8 rounded-2xl border border-[#d5e3eb] bg-[#f5f9fb] p-5">
+            <h3 className="text-[#22577A] font-bold text-xl mb-3">
+              Resumo das avaliações
+            </h3>
+            {isSummaryLoading ? (
+              <p className="text-[#22577A]">Carregando resumo...</p>
+            ) : summaryError ? (
+              <p role="alert" className="text-red-700">
+                Não foi possível carregar o resumo: {summaryError}
+              </p>
+            ) : reviewSummary?.status === 'available' && reviewSummary.summary ? (
+              <>
+                <p className="text-[#22577A] whitespace-pre-line">
+                  {reviewSummary.summary}
+                </p>
+                <p className="mt-3 text-sm text-[#526b7a]">
+                  Gerado com base em {reviewSummary.reviewCount}{' '}
+                  {reviewSummary.reviewCount === 1 ? 'avaliação' : 'avaliações'}.
+                  {reviewSummary.pendingReviewCount > 0 &&
+                    ` ${reviewSummary.pendingReviewCount} ${
+                      reviewSummary.pendingReviewCount === 1
+                        ? 'avaliação aguarda'
+                        : 'avaliações aguardam'
+                    } a próxima atualização.`}
+                </p>
+              </>
+            ) : reviewSummary?.status === 'pending' ? (
+              <p className="text-[#22577A]">
+                O resumo está sendo atualizado. Volte em alguns instantes.
+              </p>
+            ) : (
+              <p className="text-[#22577A]">
+                Ainda não há avaliações suficientes para gerar um resumo.
+              </p>
+            )}
+          </section>
+
+          <h3 className="text-[#22577A] font-bold text-xl mt-8 mb-2">Avaliações:</h3>
           {reviews.length === 0 ? (
             <p className="text-[#22577A]">Nenhuma avaliação encontrada.</p>
           ) : (
