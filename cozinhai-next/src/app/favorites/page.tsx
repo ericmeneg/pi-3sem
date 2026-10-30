@@ -7,6 +7,7 @@ import { Trash2 } from 'lucide-react'
 import Image from 'next/image'
 import Header from '@/components/Header'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 type FavoriteRecipe = {
   recipeId: string
@@ -14,23 +15,31 @@ type FavoriteRecipe = {
   recipeImage?: string
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || 'https://pi-3sem-backend.onrender.com'
 
 export default function FavoritesPage() {
-  const { user } = useAuth()
+  const { user, isLoading: isAuthLoading } = useAuth()
   const router = useRouter()
   const [favorites, setFavorites] = useState<FavoriteRecipe[]>([])
   const [loading, setLoading] = useState(true)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [offset, setOffset] = useState(0)
   const [hasMore, setHasMore] = useState(true)
   const limit = 12
 
   const fetchFavorites = useCallback(async () => {
-    if (!user?.id || !hasMore) return
+    if (isAuthLoading || !hasMore) return
+    if (!user?.id) {
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
+    setErrorMessage(null)
     try {
       const token = localStorage.getItem('token')
-      const response = await axios.get(
+      const response = await axios.get<FavoriteRecipe[]>(
         `${API_URL}/user/${user.id}/favorites`,
         {
           params: { limit, offset },
@@ -40,17 +49,40 @@ export default function FavoritesPage() {
         }
       )
 
+      if (!Array.isArray(response.data)) {
+        throw new Error('A API retornou uma resposta inválida para os favoritos.')
+      }
+
       if (response.data.length < limit) {
         setHasMore(false)
       }
 
-      setFavorites((prev) => [...prev, ...response.data])
+      setFavorites((prev) =>
+        offset === 0 ? response.data : [...prev, ...response.data]
+      )
     } catch (error) {
       console.error('Erro ao buscar favoritos:', error)
+      if (axios.isAxiosError<{ message?: string | string[] }>(error)) {
+        const apiMessage = error.response?.data?.message
+        const message = Array.isArray(apiMessage)
+          ? apiMessage.join(' ')
+          : apiMessage || error.message
+        setErrorMessage(
+          `Não foi possível carregar o caderno de receitas${
+            error.response?.status ? ` (HTTP ${error.response.status})` : ''
+          }: ${message}`
+        )
+      } else {
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : 'Não foi possível carregar o caderno de receitas.'
+        )
+      }
     } finally {
       setLoading(false)
     }
-  }, [user?.id, offset, hasMore])
+  }, [user?.id, isAuthLoading, offset, hasMore])
 
   const removeFavorite = async (recipeId: string) => {
     try {
@@ -81,8 +113,6 @@ export default function FavoritesPage() {
     setOffset((prev) => prev + limit)
   }
 
-  if (loading && favorites.length === 0) return <p className="p-4">Carregando favoritos...</p>
-
   return (
     <>
       <Header />
@@ -91,7 +121,28 @@ export default function FavoritesPage() {
           Caderno de Receitas
         </h1>
 
-        {favorites.length === 0 ? (
+        {isAuthLoading || (loading && favorites.length === 0) ? (
+          <p className="text-gray-600">Carregando favoritos...</p>
+        ) : !user ? (
+          <p className="text-gray-600">
+            <Link href="/login" className="text-[#22577A] underline">
+              Entre na sua conta
+            </Link>{' '}
+            para acessar suas receitas favoritas.
+          </p>
+        ) : errorMessage ? (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+            <p role="alert">{errorMessage}</p>
+            <button
+              type="button"
+              onClick={fetchFavorites}
+              disabled={loading}
+              className="mt-3 rounded-lg bg-[#22577A] px-4 py-2 text-white hover:bg-[#19495d] disabled:opacity-60"
+            >
+              {loading ? 'Tentando novamente...' : 'Tentar novamente'}
+            </button>
+          </div>
+        ) : favorites.length === 0 ? (
           <p className="text-gray-600">Você ainda não favoritou nenhuma receita.</p>
         ) : (
           <>
