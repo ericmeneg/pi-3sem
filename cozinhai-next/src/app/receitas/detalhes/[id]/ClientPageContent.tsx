@@ -5,7 +5,7 @@ import { useAuth } from '@/components/auth/auth-context'
 import Image from 'next/image'
 import Footer from '@/components/Footer'
 import axios from 'axios'
-import { Star } from 'lucide-react'
+import { Heart, Star } from 'lucide-react'
 import Link from 'next/link'
 import Header from '@/components/Header'
 
@@ -33,6 +33,12 @@ interface Review {
   userId: string
   date?: string
 }
+
+interface Favorite {
+  recipeId: string
+}
+
+const FAVORITES_PAGE_SIZE = 12
 
 const StarsEdit = ({
   grade,
@@ -70,13 +76,17 @@ interface ClientPageContentProps {
 }
 
 export default function ClientPageContent({ idReceita }: ClientPageContentProps) {
-  const { user, isAuthenticated } = useAuth()
+  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth()
   const [data, setData] = useState<RecipeData | null>(null)
   const [reviews, setReviews] = useState<Review[]>([])
   const [comment, setComment] = useState('')
   const [grade, setGrade] = useState(3)
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isFavorite, setIsFavorite] = useState(false)
+  const [isFavoriteLoading, setIsFavoriteLoading] = useState(false)
+  const [isFavoriteSubmitting, setIsFavoriteSubmitting] = useState(false)
+  const [favoriteError, setFavoriteError] = useState<string | null>(null)
 
   const hasUserReviewed = useMemo(() => {
     if (!isAuthenticated || !user || !reviews.length) {
@@ -125,6 +135,107 @@ export default function ClientPageContent({ idReceita }: ClientPageContentProps)
 
     fetchData()
   }, [idReceita])
+
+  useEffect(() => {
+    if (isAuthLoading) return
+
+    if (!user || !isAuthenticated) {
+      setIsFavorite(false)
+      setIsFavoriteLoading(false)
+      return
+    }
+
+    let cancelled = false
+
+    const fetchFavoriteStatus = async () => {
+      setIsFavoriteLoading(true)
+      setFavoriteError(null)
+
+      try {
+        const token = localStorage.getItem('token')
+        let offset = 0
+
+        while (true) {
+          const response = await axios.get<Favorite[]>(
+            `${process.env.NEXT_PUBLIC_API_URL}/user/${user.id}/favorites`,
+            {
+              params: { limit: FAVORITES_PAGE_SIZE, offset },
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          )
+
+          if (!Array.isArray(response.data)) {
+            throw new Error('Resposta inválida ao buscar favoritos.')
+          }
+
+          if (response.data.some((favorite) => favorite.recipeId === idReceita)) {
+            if (!cancelled) setIsFavorite(true)
+            return
+          }
+
+          if (response.data.length < FAVORITES_PAGE_SIZE) break
+          offset += FAVORITES_PAGE_SIZE
+        }
+
+        if (!cancelled) setIsFavorite(false)
+      } catch (error) {
+        console.error('Erro ao verificar se a receita está favoritada:', error)
+        if (!cancelled) {
+          setFavoriteError('Não foi possível verificar seus favoritos.')
+        }
+      } finally {
+        if (!cancelled) setIsFavoriteLoading(false)
+      }
+    }
+
+    fetchFavoriteStatus()
+
+    return () => {
+      cancelled = true
+    }
+  }, [idReceita, isAuthLoading, isAuthenticated, user])
+
+  const handleToggleFavorite = async () => {
+    if (!user || !data) return
+
+    setIsFavoriteSubmitting(true)
+    setFavoriteError(null)
+
+    try {
+      const token = localStorage.getItem('token')
+      const favoriteUrl = `${process.env.NEXT_PUBLIC_API_URL}/user/${user.id}/favorites/${idReceita}`
+
+      if (isFavorite) {
+        await axios.delete(favoriteUrl, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        setIsFavorite(false)
+      } else {
+        await axios.patch(
+          `${process.env.NEXT_PUBLIC_API_URL}/user/${user.id}/favorites`,
+          {
+            id: idReceita,
+            title: data.title,
+            recipeImage: data.image,
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
+        setIsFavorite(true)
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar favorito:', error)
+      const apiMessage = axios.isAxiosError<{ message?: string | string[] }>(error)
+        ? error.response?.data?.message
+        : undefined
+      setFavoriteError(
+        Array.isArray(apiMessage)
+          ? apiMessage.join(' ')
+          : apiMessage || 'Não foi possível atualizar seu favorito. Tente novamente.'
+      )
+    } finally {
+      setIsFavoriteSubmitting(false)
+    }
+  }
 
   const handleSubmit = async () => {
     if (!user || hasUserReviewed) {
@@ -195,6 +306,41 @@ export default function ClientPageContent({ idReceita }: ClientPageContentProps)
         />
 
         <h1 className="text-[#22577A] font-bold text-3xl text-center">{data.title}</h1>
+
+        {isAuthLoading ? (
+          <p className="text-[#22577A]">Verificando sua conta...</p>
+        ) : isAuthenticated ? (
+          <div className="flex flex-col items-center gap-2">
+            <button
+              type="button"
+              onClick={handleToggleFavorite}
+              disabled={isFavoriteLoading || isFavoriteSubmitting}
+              aria-pressed={isFavorite}
+              className="flex items-center gap-2 rounded-full border border-[#22577A] px-4 py-2 font-medium text-[#22577A] transition-colors hover:bg-[#22577A] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <Heart size={20} fill={isFavorite ? 'currentColor' : 'none'} />
+              {isFavoriteLoading
+                ? 'Verificando...'
+                : isFavoriteSubmitting
+                  ? 'Salvando...'
+                  : isFavorite
+                    ? 'Favoritada'
+                    : 'Favoritar receita'}
+            </button>
+            {favoriteError && (
+              <p role="alert" className="text-sm text-red-600">
+                {favoriteError}
+              </p>
+            )}
+          </div>
+        ) : (
+          <p className="text-[#22577A]">
+            <Link href="/login" className="underline hover:text-[#19495d]">
+              Entre na sua conta
+            </Link>{' '}
+            para favoritar esta receita.
+          </p>
+        )}
 
         <Image
           src={data.image}
