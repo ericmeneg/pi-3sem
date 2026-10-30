@@ -38,10 +38,12 @@ type ReviewSummaryStatus = 'not_ready' | 'pending' | 'available'
 
 interface ReviewSummary {
   status: ReviewSummaryStatus
-  summary?: string
+  summary: string | null
   reviewCount: number
-  pendingReviewCount: number
-  generatedAt?: string
+  pendingReviewCount: number | null
+  generatedAt: string | null
+  averageRating: number | null
+  ratingCount: number
 }
 
 interface Favorite {
@@ -80,6 +82,37 @@ const Stars = ({ grade = 0 }: { grade?: number }) => (
         className={i <= grade ? 'fill-current' : 'text-gray-300'}
       />
     ))}
+  </div>
+)
+
+const AverageStars = ({ rating }: { rating: number | null }) => (
+  <div
+    className="flex gap-1 text-gray-300"
+    aria-label={
+      rating === null
+        ? 'Sem avaliações'
+        : `Média de ${rating.toLocaleString('pt-BR', {
+            minimumFractionDigits: 1,
+            maximumFractionDigits: 1,
+          })} de 5`
+    }
+  >
+    {[1, 2, 3, 4, 5].map((star) => {
+      const fillPercent =
+        rating === null ? 0 : Math.min(Math.max(rating - star + 1, 0), 1) * 100
+
+      return (
+        <span key={star} className="relative inline-flex">
+          <Star size={22} />
+          <span
+            className="absolute inset-y-0 left-0 overflow-hidden text-yellow-500"
+            style={{ width: `${fillPercent}%` }}
+          >
+            <Star size={22} className="fill-current" />
+          </span>
+        </span>
+      )
+    })}
   </div>
 )
 
@@ -442,7 +475,7 @@ export default function ClientPageContent({ idReceita }: ClientPageContentProps)
 
           <section className="mt-8 rounded-2xl border border-[#d5e3eb] bg-[#f5f9fb] p-5">
             <h3 className="text-[#22577A] font-bold text-xl mb-3">
-              Resumo das avaliações
+              Avaliação média e resumo
             </h3>
             {isSummaryLoading ? (
               <p className="text-[#22577A]">Carregando resumo...</p>
@@ -450,31 +483,63 @@ export default function ClientPageContent({ idReceita }: ClientPageContentProps)
               <p role="alert" className="text-red-700">
                 Não foi possível carregar o resumo: {summaryError}
               </p>
-            ) : reviewSummary?.status === 'available' && reviewSummary.summary ? (
+            ) : reviewSummary ? (
               <>
-                <p className="text-[#22577A] whitespace-pre-line">
-                  {reviewSummary.summary}
-                </p>
-                <p className="mt-3 text-sm text-[#526b7a]">
-                  Gerado com base em {reviewSummary.reviewCount}{' '}
-                  {reviewSummary.reviewCount === 1 ? 'avaliação' : 'avaliações'}.
-                  {reviewSummary.pendingReviewCount > 0 &&
-                    ` ${reviewSummary.pendingReviewCount} ${
-                      reviewSummary.pendingReviewCount === 1
-                        ? 'avaliação aguarda'
-                        : 'avaliações aguardam'
-                    } a próxima atualização.`}
-                </p>
+                <div className="mb-4 flex flex-wrap items-center gap-3 text-[#22577A]">
+                  <AverageStars
+                    rating={
+                      reviewSummary.ratingCount > 0
+                        ? reviewSummary.averageRating
+                        : null
+                    }
+                  />
+                  {reviewSummary.averageRating !== null &&
+                  reviewSummary.ratingCount > 0 ? (
+                    <span className="font-semibold">
+                      {reviewSummary.averageRating.toLocaleString('pt-BR', {
+                        minimumFractionDigits: 1,
+                        maximumFractionDigits: 1,
+                      })}
+                      /5 ({reviewSummary.ratingCount}{' '}
+                      {reviewSummary.ratingCount === 1
+                        ? 'avaliação'
+                        : 'avaliações'})
+                    </span>
+                  ) : (
+                    <span className="font-medium">Sem avaliações</span>
+                  )}
+                </div>
+
+                {reviewSummary.summary ? (
+                  <>
+                    <p className="text-[#22577A] whitespace-pre-line">
+                      {reviewSummary.summary}
+                    </p>
+                    <p className="mt-3 text-sm text-[#526b7a]">
+                      Resumo baseado em {reviewSummary.reviewCount}{' '}
+                      {reviewSummary.reviewCount === 1
+                        ? 'comentário'
+                        : 'comentários'}.
+                      {reviewSummary.pendingReviewCount !== null &&
+                        reviewSummary.pendingReviewCount > 0 &&
+                        ` ${reviewSummary.pendingReviewCount} ${
+                          reviewSummary.pendingReviewCount === 1
+                            ? 'comentário aguarda'
+                            : 'comentários aguardam'
+                        } a próxima atualização.`}
+                    </p>
+                  </>
+                ) : reviewSummary.status === 'pending' ? (
+                  <p className="text-[#22577A]">
+                    O resumo está sendo atualizado. Volte em alguns instantes.
+                  </p>
+                ) : (
+                  <p className="text-[#22577A]">
+                    Ainda não há comentários suficientes para gerar um resumo.
+                  </p>
+                )}
               </>
-            ) : reviewSummary?.status === 'pending' ? (
-              <p className="text-[#22577A]">
-                O resumo está sendo atualizado. Volte em alguns instantes.
-              </p>
-            ) : (
-              <p className="text-[#22577A]">
-                Ainda não há avaliações suficientes para gerar um resumo.
-              </p>
-            )}
+            ) : null}
           </section>
 
           <h3 className="text-[#22577A] font-bold text-xl mt-8 mb-2">Avaliações:</h3>
