@@ -1,33 +1,50 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Footer() {
   return (
     <div className="bg-[#22577A] p-8 md:p-18 gap-12 flex flex-col">
       <div className="flex flex-col md:flex-row justify-between items-center gap-6">
         <Link href="/">
-          <img
+          <Image
             src="/images/fullLogoWhite.svg"
+            alt="CozinhAI"
             className="w-40 md:w-56 hover:brightness-75"
+            width={224}
+            height={80}
           />
         </Link>
 
         <div className="flex flex-row gap-4 md:gap-5 items-center">
           {[
-            { href: "https://www.tiktok.com", src: "/images/tiktokIcon.svg" },
-            { href: "https://www.x.com", src: "/images/twitterIcon.svg" },
+            {
+              href: "https://www.tiktok.com",
+              src: "/images/tiktokIcon.svg",
+              alt: "TikTok",
+            },
+            {
+              href: "https://www.x.com",
+              src: "/images/twitterIcon.svg",
+              alt: "X",
+            },
             {
               href: "https://www.instagram.com",
               src: "/images/instagramIcon.svg",
+              alt: "Instagram",
             },
             {
               href: "https://www.facebook.com",
               src: "/images/facebookIcon.svg",
+              alt: "Facebook",
             },
           ].map((icon, i) => (
             <Link key={i} href={icon.href} target="_blank">
-              <img
+              <Image
                 src={icon.src}
+                alt={icon.alt}
                 className="w-6 md:w-8 hover:brightness-75 transition"
+                width={32}
+                height={32}
               />
             </Link>
           ))}

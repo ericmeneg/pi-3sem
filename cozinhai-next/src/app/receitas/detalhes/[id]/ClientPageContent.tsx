@@ -8,6 +8,7 @@ import axios from 'axios'
 import { Heart, Star } from 'lucide-react'
 import Link from 'next/link'
 import Header from '@/components/Header'
+import { htmlToText } from '@/utils/html-to-text'
 
 interface Ingredient {
   id: number
@@ -127,6 +128,8 @@ export default function ClientPageContent({ idReceita }: ClientPageContentProps)
   const [comment, setComment] = useState('')
   const [grade, setGrade] = useState(3)
   const [isLoading, setIsLoading] = useState(true)
+  const [recipeError, setRecipeError] = useState<string | null>(null)
+  const [recipeRetry, setRecipeRetry] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isFavorite, setIsFavorite] = useState(false)
   const [isFavoriteLoading, setIsFavoriteLoading] = useState(false)
@@ -139,22 +142,17 @@ export default function ClientPageContent({ idReceita }: ClientPageContentProps)
 
   const hasUserReviewed = useMemo(() => {
     if (!isAuthenticated || !user || !reviews.length) {
-      console.log('hasUserReviewed: Pre-check failed (not auth, no user, or no reviews)');
       return false;
     }
-    const reviewed = reviews.some(review => review.userId === user.id);
-    console.log('--- Debugging hasUserReviewed ---');
-    console.log('Current User ID (from useAuth):', user?.id);
-    console.log('Reviews fetched from backend:', reviews);
-    console.log('Does any review match current user ID (hasUserReviewed)?', reviewed);
-    console.log('---------------------------------');
-    return reviewed;
+    return reviews.some(review => review.userId === user.id);
   }, [isAuthenticated, user, reviews]);
 
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true)
+      setRecipeError(null)
       try {
-        const recipeRes = await axios.get(
+        const recipeRes = await axios.get<RecipeData>(
           `https://api.spoonacular.com/recipes/${idReceita}/information`,
           {
             params: {
@@ -162,9 +160,22 @@ export default function ClientPageContent({ idReceita }: ClientPageContentProps)
             },
           }
         )
+        if (!recipeRes.data) {
+          throw new Error('A API não retornou os detalhes da receita.')
+        }
         setData(recipeRes.data)
+      } catch (error) {
+        console.error('Erro ao carregar dados da receita:', error)
+        setData(null)
+        setRecipeError(
+          'Não foi possível carregar os detalhes da receita. Verifique sua conexão e tente novamente.'
+        )
+      } finally {
+        setIsLoading(false)
+      }
 
-        const reviewRes = await axios.get(
+      try {
+        const reviewRes = await axios.get<Review[]>(
           `${process.env.NEXT_PUBLIC_API_URL}/recipe/${idReceita}/reviews`,
           {
             params: {
@@ -173,17 +184,14 @@ export default function ClientPageContent({ idReceita }: ClientPageContentProps)
             },
           }
         )
-        console.log('API Response for Reviews:', reviewRes.data);
         setReviews(reviewRes.data)
       } catch (error) {
-        console.error('Erro ao carregar dados da receita:', error)
-      } finally {
-        setIsLoading(false)
+        console.error('Erro ao carregar avaliações da receita:', error)
       }
     }
 
     fetchData()
-  }, [idReceita])
+  }, [idReceita, recipeRetry])
 
   useEffect(() => {
     let cancelled = false
@@ -341,10 +349,7 @@ export default function ClientPageContent({ idReceita }: ClientPageContentProps)
   }
 
   const handleSubmit = async () => {
-    if (!user || hasUserReviewed) {
-      console.log('Submit prevented: User not authenticated or already reviewed.');
-      return;
-    }
+    if (!user || hasUserReviewed) return
     setIsSubmitting(true)
     try {
       const token = localStorage.getItem('token')
@@ -370,12 +375,9 @@ export default function ClientPageContent({ idReceita }: ClientPageContentProps)
         if (existingReviewIndex > -1) {
           const updatedReviews = [...prevReviews];
           updatedReviews[existingReviewIndex] = newOrUpdatedReview;
-          console.log('Reviews state updated (existing):', updatedReviews);
           return updatedReviews;
         } else {
-          const newReviews = [...prevReviews, newOrUpdatedReview];
-          console.log('Reviews state updated (new):', newReviews);
-          return newReviews;
+          return [...prevReviews, newOrUpdatedReview];
         }
       });
 
@@ -389,10 +391,27 @@ export default function ClientPageContent({ idReceita }: ClientPageContentProps)
     }
   }
 
-  if (isLoading || !data) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex justify-center items-center">
-        <p>Carregando receita...</p>
+        <p role="status">Carregando receita...</p>
+      </div>
+    )
+  }
+
+  if (recipeError || !data) {
+    return (
+      <div className="min-h-screen flex flex-col justify-center items-center gap-4 px-6 text-center">
+        <p role="alert" className="text-red-700">
+          {recipeError || 'Não foi possível carregar os detalhes da receita.'}
+        </p>
+        <button
+          type="button"
+          onClick={() => setRecipeRetry((attempt) => attempt + 1)}
+          className="rounded-lg bg-[#22577A] px-4 py-2 text-white hover:bg-[#19495d]"
+        >
+          Tentar novamente
+        </button>
       </div>
     )
   }
@@ -468,10 +487,9 @@ export default function ClientPageContent({ idReceita }: ClientPageContentProps)
           </ul>
 
           <h3 className="text-[#22577A] font-bold text-xl mt-6 mb-2">Modo de preparo:</h3>
-          <div
-            className="text-[#22577A] text-lg font-medium whitespace-pre-line"
-            dangerouslySetInnerHTML={{ __html: data.instructions }}
-          />
+          <p className="text-[#22577A] text-lg font-medium whitespace-pre-line">
+            {htmlToText(data.instructions)}
+          </p>
 
           <section className="mt-8 rounded-2xl border border-[#d5e3eb] bg-[#f5f9fb] p-5">
             <h3 className="text-[#22577A] font-bold text-xl mb-3">

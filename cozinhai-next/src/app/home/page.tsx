@@ -105,6 +105,7 @@ export default function Home() {
             className={`flex w-full max-w-xs sm:max-w-md items-center border-2 border-[#22577A] rounded-xl px-3 inputContainer`}
           >
             <input
+              aria-label="Buscar um ingrediente"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               type="text"
@@ -112,10 +113,17 @@ export default function Home() {
               className={`flex-grow bg-transparent py-2 text-black font-alexandria text-sm sm:text-base input`}
             />
 
-            <button onClick={handleIngredient}>
-              <img
+            <button
+              type="button"
+              onClick={handleIngredient}
+              aria-label="Adicionar ingrediente"
+            >
+              <Image
                 src="/images/addIcon.svg"
-                className={`w-4 sm:w-5 lupaIcon`}
+                alt=""
+                width={20}
+                height={20}
+                className="w-4 sm:w-5 lupaIcon"
               />
             </button>
           </div>
@@ -151,6 +159,7 @@ export default function Home() {
                 <button
                   onClick={() => removeIngredient(index)}
                   className="text-[#22577A]"
+                  aria-label={`Remover ${item}`}
                 >
                   ✕
                 </button>

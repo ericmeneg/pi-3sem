@@ -42,7 +42,6 @@ export default function Header() {
         <SearchBar
           placeholder="Busque receitas"
           imgURL="/images/lupaIcon.svg"
-          searchUrl={`https://api.spoonacular.com/recipes/complexSearch?query=${"W.I.P."}&apiKey=${"W.I.P."}`}
         />
 
           {/* Área do usuário */}

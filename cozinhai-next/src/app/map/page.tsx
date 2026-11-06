@@ -1,4 +1,5 @@
 import Header from "@/components/Header";
+import Image from "next/image";
 
 export default function Home() {
   return (
@@ -17,10 +18,12 @@ export default function Home() {
         </div>
 
         <div className="w-full flex justify-center">
-          <img
+          <Image
             src="/images/mapamodificado.png"
             alt="Mapa de Indaiatuba"
             className="w-full max-w-5xl h-auto rounded-lg shadow-md"
+            width={1060}
+            height={508}
           />
         </div>
       </div>

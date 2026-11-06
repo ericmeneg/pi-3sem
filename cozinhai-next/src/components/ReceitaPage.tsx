@@ -8,6 +8,7 @@ import Footer from '@/components/Footer'
 import axios from 'axios'
 import { Star } from 'lucide-react'
 import Link from 'next/link';
+import { htmlToText } from '@/utils/html-to-text'
 
 interface Ingredient {
   id: number
@@ -79,16 +80,9 @@ export default function ReceitaPage({ params }: { params: { id: string } }) {
 
   const hasUserReviewed = useMemo(() => {
     if (!isAuthenticated || !user || !reviews.length) {
-      console.log('hasUserReviewed: Pre-check failed (not auth, no user, or no reviews)');
       return false;
     }
-    const reviewed = reviews.some(review => review.userId === user.id);
-    console.log('--- Debugging hasUserReviewed ---');
-    console.log('Current User ID (from useAuth):', user.id);
-    console.log('Reviews fetched from backend:', reviews);
-    console.log('Does any review match current user ID (hasUserReviewed)?', reviewed);
-    console.log('---------------------------------');
-    return reviewed;
+    return reviews.some(review => review.userId === user.id);
   }, [isAuthenticated, user, reviews]);
 
   useEffect(() => {
@@ -113,7 +107,6 @@ export default function ReceitaPage({ params }: { params: { id: string } }) {
             },
           }
         )
-        console.log('API Response for Reviews:', reviewRes.data);
         setReviews(reviewRes.data)
       } catch (error) {
         console.error('Erro ao carregar dados da receita:', error)
@@ -126,10 +119,7 @@ export default function ReceitaPage({ params }: { params: { id: string } }) {
   }, [idReceita])
 
   const handleSubmit = async () => {
-    if (!user || hasUserReviewed) {
-      console.log('Submit prevented: User not authenticated or already reviewed.');
-      return;
-    }
+    if (!user || hasUserReviewed) return
     setIsSubmitting(true)
     try {
       const token = localStorage.getItem('token')
@@ -154,12 +144,9 @@ export default function ReceitaPage({ params }: { params: { id: string } }) {
         if (existingReviewIndex > -1) {
           const updatedReviews = [...prevReviews];
           updatedReviews[existingReviewIndex] = newOrUpdatedReview;
-          console.log('Reviews state updated (existing):', updatedReviews);
           return updatedReviews;
         } else {
-          const newReviews = [...prevReviews, newOrUpdatedReview];
-          console.log('Reviews state updated (new):', newReviews);
-          return newReviews;
+          return [...prevReviews, newOrUpdatedReview];
         }
       });
 
@@ -216,10 +203,9 @@ export default function ReceitaPage({ params }: { params: { id: string } }) {
           </ul>
 
           <h3 className="text-[#22577A] font-bold text-xl mt-6 mb-2">Modo de preparo:</h3>
-          <div
-            className="text-[#22577A] text-lg font-medium whitespace-pre-line"
-            dangerouslySetInnerHTML={{ __html: data.instructions }}
-          />
+          <p className="text-[#22577A] text-lg font-medium whitespace-pre-line">
+            {htmlToText(data.instructions)}
+          </p>
 
           <h3 className="text-[#22577A] font-bold text-xl mt-6 mb-2">Avaliações:</h3>
           {reviews.length === 0 ? (
